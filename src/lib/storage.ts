@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   notionToken: "",
   parentPageId: "",
   firstUserTitleMaxLen: 80,
-  titleTemplate: "{{date}} — {{site}} ({{message_count}} msgs)",
+  titleTemplate: "{{datetime_compact}}-{{title_from_first_user_message}}",
   descriptionTemplate: "Model: {{model}}",
   bodyTemplate: `{{#each messages}}
 **{{role}}**
@@ -33,8 +33,19 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   llmBaseUrl: "https://api.openai.com/v1",
   llmApiKey: "",
   llmModel: "gpt-4o-mini",
-  llmReformatPrompt:
-    "Rewrite the following conversation as clean Markdown: use ## for each speaker turn, keep code in fenced blocks.",
+  llmReformatPrompt: `Analyze the following AI conversation and produce Markdown with these sections IN ORDER:
+
+## Summary
+One paragraph summarizing what this conversation is about.
+
+## Key Takeaways
+- Bullet list of the most important insights or decisions.
+
+## Tags
+Comma-separated list of short topic tags (e.g. rust, linux, performance, debugging).
+
+## Conversation
+Rewrite the conversation cleanly: use ### for each speaker turn, keep code in fenced blocks.`,
 };
 
 const STORAGE_KEY = "notionAiSyncSettings";

@@ -9,15 +9,14 @@ import {
   reformatBodyWithLlm,
 } from "../llm/llm-client.js";
 
-async function ensureOptionalOrigin(origin: string): Promise<void> {
+async function checkOptionalOrigin(origin: string): Promise<void> {
   const has = await chrome.permissions.contains({
     origins: [`${origin}/*`],
   });
   if (!has) {
-    const granted = await chrome.permissions.request({
-      origins: [`${origin}/*`],
-    });
-    if (!granted) throw new Error("Permission denied for LLM API origin");
+    throw new Error(
+      `Missing host permission for ${origin}. Please grant it when prompted and retry.`
+    );
   }
 }
 
@@ -36,20 +35,23 @@ export async function syncConversationToNotion(
     firstUserTitleMaxLen: settings.firstUserTitleMaxLen,
   });
 
-  let title = renderTemplate(settings.titleTemplate, ctx);
-  let description = renderTemplate(settings.descriptionTemplate, ctx);
+  const title = renderTemplate(settings.titleTemplate, ctx);
+  const description = renderTemplate(settings.descriptionTemplate, ctx);
   let body = renderTemplate(settings.bodyTemplate, ctx);
+  let tags: string[] = [];
 
   if (settings.useLlmReformat && settings.llmApiKey.trim()) {
     const o = originFromBaseUrl(settings.llmBaseUrl);
     if (!o) throw new Error("Invalid LLM base URL");
-    await ensureOptionalOrigin(o);
+    await checkOptionalOrigin(o);
     const plain = conversationToPlainText(conv);
-    body = await reformatBodyWithLlm(plain, settings.llmReformatPrompt, {
+    const result = await reformatBodyWithLlm(plain, settings.llmReformatPrompt, {
       baseUrl: settings.llmBaseUrl,
       apiKey: settings.llmApiKey,
       model: settings.llmModel,
     });
+    body = result.body;
+    tags = result.tags;
   }
 
   const created = await createNotionPage({
@@ -58,6 +60,7 @@ export async function syncConversationToNotion(
     title,
     description,
     bodyMarkdown: body,
+    tags,
   });
 
   return { pageUrl: created.url };

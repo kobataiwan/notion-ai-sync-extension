@@ -4,7 +4,7 @@ export type PresetId = "minimal" | "thread" | "qa";
 
 export const PRESETS: Record<PresetId, UserTemplateSettings> = {
   minimal: {
-    titleTemplate: "{{date}} — {{site}} ({{message_count}} msgs)",
+    titleTemplate: "{{datetime_compact}}-{{title_from_first_user_message}}",
     descriptionTemplate: "Model: {{model}}",
     bodyTemplate: `{{#each messages}}
 **{{role}}**
@@ -13,7 +13,7 @@ export const PRESETS: Record<PresetId, UserTemplateSettings> = {
 {{/each}}`,
   },
   thread: {
-    titleTemplate: "{{title_from_first_user_message}}",
+    titleTemplate: "{{datetime_compact}}-{{title_from_first_user_message}}",
     descriptionTemplate: "{{site}} · {{model}} · {{date}} {{time}}",
     bodyTemplate: `{{#each messages}}
 ## {{role}}
@@ -22,7 +22,7 @@ export const PRESETS: Record<PresetId, UserTemplateSettings> = {
 {{/each}}`,
   },
   qa: {
-    titleTemplate: "Q&A — {{title_from_first_user_message}}",
+    titleTemplate: "{{datetime_compact}}-{{title_from_first_user_message}}",
     descriptionTemplate: "Messages: {{message_count}} · {{site}}",
     bodyTemplate: `{{#each messages}}
 ### {{role}}

@@ -119,17 +119,42 @@ function normalizeNotionId(id: string): string {
   return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20)}`;
 }
 
+async function resolveParentType(
+  token: string,
+  id: string
+): Promise<"page" | "database"> {
+  const res = await fetch(`https://api.notion.com/v1/databases/${id}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Notion-Version": NOTION_VERSION,
+    },
+  });
+  return res.ok ? "database" : "page";
+}
+
 export async function createNotionPage(params: {
   token: string;
   parentPageId: string;
   title: string;
   description: string;
   bodyMarkdown: string;
+  tags?: string[];
 }): Promise<{ id: string; url?: string }> {
   const parentId = normalizeNotionId(params.parentPageId);
+  const parentType = await resolveParentType(params.token, parentId);
+
   const titleProp = {
     title: [{ type: "text" as const, text: { content: params.title.slice(0, 2000) } }],
   };
+
+  const properties: Record<string, unknown> = { title: titleProp };
+
+  if (parentType === "database" && params.tags && params.tags.length > 0) {
+    properties["Tags"] = {
+      multi_select: params.tags.map((t) => ({ name: t })),
+    };
+  }
 
   const children: NotionBlock[] = [];
   if (params.description.trim()) {
@@ -141,6 +166,11 @@ export async function createNotionPage(params: {
   const firstBatch = children.slice(0, chunkSize);
   const rest = children.slice(chunkSize);
 
+  const parent =
+    parentType === "database"
+      ? { database_id: parentId }
+      : { page_id: parentId };
+
   const res = await fetch("https://api.notion.com/v1/pages", {
     method: "POST",
     headers: {
@@ -149,10 +179,8 @@ export async function createNotionPage(params: {
       "Notion-Version": NOTION_VERSION,
     },
     body: JSON.stringify({
-      parent: { page_id: parentId },
-      properties: {
-        title: titleProp,
-      },
+      parent,
+      properties,
       children: firstBatch,
     }),
   });

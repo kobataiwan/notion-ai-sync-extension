@@ -1,3 +1,6 @@
+import { loadSettings } from "../lib/storage.js";
+import { originFromBaseUrl } from "../llm/llm-client.js";
+
 const statusEl = document.getElementById("status")!;
 const syncBtn = document.getElementById("sync") as HTMLButtonElement;
 const openOpts = document.getElementById("open-options") as HTMLAnchorElement;
@@ -7,10 +10,23 @@ openOpts.addEventListener("click", (e) => {
   chrome.runtime.openOptionsPage();
 });
 
+async function ensureLlmPermission(): Promise<void> {
+  const s = await loadSettings();
+  if (!s.useLlmReformat || !s.llmApiKey.trim()) return;
+  const origin = originFromBaseUrl(s.llmBaseUrl);
+  if (!origin) return;
+  const has = await chrome.permissions.contains({ origins: [`${origin}/*`] });
+  if (has) return;
+  const granted = await chrome.permissions.request({ origins: [`${origin}/*`] });
+  if (!granted) throw new Error("Permission denied for LLM API origin");
+}
+
 syncBtn.addEventListener("click", async () => {
-  statusEl.textContent = "Reading page…";
+  statusEl.textContent = "Checking permissions…";
   syncBtn.disabled = true;
   try {
+    await ensureLlmPermission();
+    statusEl.textContent = "Reading page…";
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) throw new Error("No active tab");
     const resp = await chrome.tabs.sendMessage(tab.id, { type: "GET_CONVERSATION" });

@@ -58,25 +58,79 @@ function dedupeAdjacent(msgs: ConversationMessage[]): ConversationMessage[] {
   return r;
 }
 
-/** Gemini: heuristic blocks. */
+/** Gemini: try multiple selector strategies. */
 function extractGemini(): ConversationMessage[] {
   const out: ConversationMessage[] = [];
-  const rows = document.querySelectorAll("message-content, .user-query, model-response");
-  if (rows.length === 0) {
-    const fallback = document.body?.innerText?.trim();
-    if (fallback)
-      return [{ role: "user", content: fallback.slice(0, 120_000) }];
-    return [];
+
+  const turns = document.querySelectorAll(".conversation-turn, .turn-content, [data-turn-id]");
+  if (turns.length > 0) {
+    turns.forEach((el) => {
+      const text = (el as HTMLElement).innerText?.trim() ?? "";
+      if (!text) return;
+      const html = el.outerHTML.toLowerCase();
+      const role: MessageRole =
+        html.includes("user") || el.querySelector(".user-query, .query-text") ? "user" : "assistant";
+      out.push({ role, content: text });
+    });
+    if (out.length > 0) return dedupeAdjacent(out);
   }
-  rows.forEach((el) => {
-    const tag = el.tagName.toLowerCase();
-    const text = (el as HTMLElement).innerText?.trim() ?? "";
-    if (!text) return;
-    const role: MessageRole =
-      tag === "user-query" || el.classList.contains("user-query") ? "user" : "assistant";
-    out.push({ role, content: text });
-  });
-  return dedupeAdjacent(out);
+
+  const userEls = document.querySelectorAll(".user-query, .query-text, user-query");
+  const modelEls = document.querySelectorAll("model-response, .model-response");
+  if (userEls.length > 0 || modelEls.length > 0) {
+    const pairs: Array<{ el: Element; role: MessageRole }> = [];
+    userEls.forEach((el) => pairs.push({ el, role: "user" }));
+    modelEls.forEach((el) => pairs.push({ el, role: "assistant" }));
+    pairs.sort((a, b) => {
+      const pos = a.el.compareDocumentPosition(b.el);
+      return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    for (const { el, role } of pairs) {
+      const text = (el as HTMLElement).innerText?.trim() ?? "";
+      if (text) out.push({ role, content: text });
+    }
+    if (out.length > 0) return dedupeAdjacent(out);
+  }
+
+  const msgContents = document.querySelectorAll("message-content");
+  if (msgContents.length > 0) {
+    msgContents.forEach((el, i) => {
+      const text = (el as HTMLElement).innerText?.trim() ?? "";
+      if (!text) return;
+      out.push({ role: i % 2 === 0 ? "user" : "assistant", content: text });
+    });
+    if (out.length > 0) return dedupeAdjacent(out);
+  }
+
+  const fallback = document.body?.innerText?.trim();
+  if (fallback) return [{ role: "user", content: fallback.slice(0, 120_000) }];
+  return [];
+}
+
+function detectModel(hostname: string): string {
+  const selectors = [
+    "[data-testid='model-selector']",
+    ".model-name",
+    "[data-testid='model-switcher'] span",
+    "button[aria-haspopup] [data-testid]",
+  ];
+  for (const s of selectors) {
+    const t = document.querySelector(s)?.textContent?.trim();
+    if (t) return t;
+  }
+  if (hostname.includes("gemini.google.com")) {
+    const btn = document.querySelector(
+      "mat-menu-trigger, .model-selector, button.mdc-button, [aria-label*='model'], .selected-model"
+    );
+    if (btn?.textContent?.trim()) return btn.textContent.trim();
+    const title = document.title;
+    const m = /gemini\s*([\d.]+\s*\w*)/i.exec(title);
+    if (m) return `Gemini ${m[1].trim()}`;
+    return "Gemini";
+  }
+  if (hostname.includes("claude.ai")) return "Claude";
+  if (hostname.includes("chatgpt.com") || hostname.includes("openai.com")) return "ChatGPT";
+  return "";
 }
 
 export function extractConversation(): Conversation {
@@ -93,10 +147,7 @@ export function extractConversation(): Conversation {
     if (t) messages = [{ role: "user", content: t.slice(0, 120_000) }];
   }
 
-  const model =
-    document.querySelector("[data-testid='model-selector']")?.textContent?.trim() ??
-    document.querySelector(".model-name")?.textContent?.trim() ??
-    "";
+  const model = detectModel(h);
 
   return {
     conversation_id: "",

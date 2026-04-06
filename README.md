@@ -2,7 +2,8 @@
 
 Sync AI chat pages (ChatGPT, Claude, Gemini) to Notion with **customizable title, description, and body templates**, optional **OpenAI-compatible LLM** to reformat the body, and a **live preview** on the options page.
 
-Product plan snapshot: [docs/PLAN.md](docs/PLAN.md).
+**Architecture / assumptions / failure matrix / test bar:** [docs/PLAN.md](docs/PLAN.md).  
+**MV3 rules, placeholder table, Notion setup steps:** this file is canonical for those sections.
 
 ## Manifest V3 (MV3) constraints
 
@@ -31,6 +32,7 @@ This extension targets **Manifest V3** (`manifest_version: 3`). Treat these as h
 |-------------|---------|
 | `{{date}}` | UTC date `YYYY-MM-DD` |
 | `{{time}}` | UTC time `HH:MM:SS` |
+| `{{datetime_compact}}` | Local `YYYYMMDDHHmm` (e.g. `202604061728`) |
 | `{{site}}` | Hostname (e.g. `chatgpt.com`) |
 | `{{model}}` | Model label if detected in the page |
 | `{{conversation_id}}` | From page if available (often empty) |
@@ -40,13 +42,16 @@ This extension targets **Manifest V3** (`manifest_version: 3`). Treat these as h
 
 ## Build
 
+From the repository root:
+
 ```bash
-cd extension
 npm install
 npm run build
 ```
 
-Load **unpacked** from `extension/dist` in `chrome://extensions` (Developer mode).
+Load **unpacked** from the `dist/` directory in `chrome://extensions` (Developer mode).
+
+`npm run build` is the merge gate; full contributor quality bar (tests, smoke, permissions review) is in [docs/PLAN.md §9](docs/PLAN.md#9-测试与合并门禁贡献者).
 
 ## Configure Notion
 
@@ -72,3 +77,4 @@ Load **unpacked** from `extension/dist` in `chrome://extensions` (Developer mode
 
 - **Default path**: Parsed conversation text stays in the extension and is sent **only to Notion** using your token.
 - **LLM reformat** (optional): Plain conversation text is sent to the **HTTP origin you configure** (OpenAI-compatible server). It is **off** by default.
+- **Storage**: Notion and LLM credentials are kept in **`chrome.storage.local`** (browser profile storage). The extension does **not** add its own encryption layer; protect your OS account and browser profile like any local secret.

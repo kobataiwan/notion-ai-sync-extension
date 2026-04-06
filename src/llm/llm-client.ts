@@ -9,11 +9,29 @@ export interface LlmConfig {
   model: string;
 }
 
+export interface LlmResult {
+  body: string;
+  tags: string[];
+}
+
+function extractTags(markdown: string): { cleaned: string; tags: string[] } {
+  const tagRe = /^##\s*Tags\s*\n([\s\S]*?)(?=\n##\s|\n$|$)/im;
+  const match = tagRe.exec(markdown);
+  if (!match) return { cleaned: markdown, tags: [] };
+
+  const rawTags = match[1]
+    .split(",")
+    .map((t) => t.replace(/^[-*]\s*/, "").trim().toLowerCase())
+    .filter(Boolean);
+  const cleaned = markdown.replace(match[0], "").replace(/\n{3,}/g, "\n\n").trim();
+  return { cleaned, tags: rawTags };
+}
+
 export async function reformatBodyWithLlm(
   plainConversation: string,
   reformatPrompt: string,
   config: LlmConfig
-): Promise<string> {
+): Promise<LlmResult> {
   const base = config.baseUrl.replace(/\/$/, "");
   const url = `${base}/chat/completions`;
   const res = await fetch(url, {
@@ -50,7 +68,9 @@ export async function reformatBodyWithLlm(
   if (!content || typeof content !== "string") {
     throw new Error("LLM response missing content");
   }
-  return content.trim();
+
+  const { cleaned, tags } = extractTags(content.trim());
+  return { body: cleaned, tags };
 }
 
 /** Returns origin (e.g. https://api.openai.com) for permission requests. */
