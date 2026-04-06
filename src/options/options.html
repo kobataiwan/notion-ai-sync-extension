@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notion AI Sync — Options</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <h1>Notion AI Sync</h1>
+
+    <section>
+      <h2>Notion</h2>
+      <label>Integration token <input type="password" id="notionToken" autocomplete="off" /></label>
+      <label>Parent page ID <input type="text" id="parentPageId" placeholder="UUID" /></label>
+      <p class="hint">
+        Create an integration at
+        <a href="https://www.notion.so/my-integrations" target="_blank" rel="noreferrer"
+          >notion.so/my-integrations</a
+        >, share the target parent page with the integration, then paste the page ID from the URL.
+      </p>
+    </section>
+
+    <section>
+      <h2>Templates</h2>
+      <p class="hint">
+        Placeholders: <code>{{date}}</code> <code>{{time}}</code> <code>{{site}}</code>
+        <code>{{model}}</code> <code>{{conversation_id}}</code>
+        <code>{{title_from_first_user_message}}</code> <code>{{message_count}}</code> and
+        <code>{{#each messages}} … {{/each}}</code> with <code>{{role}}</code> <code>{{content}}</code>.
+      </p>
+      <label>Max length for <code>title_from_first_user_message</code>
+        <input type="number" id="firstUserTitleMaxLen" min="10" max="500" />
+      </label>
+      <label>Title template <textarea id="titleTemplate" rows="2"></textarea></label>
+      <label>Description template <textarea id="descriptionTemplate" rows="2"></textarea></label>
+      <label>Body template <textarea id="bodyTemplate" rows="8"></textarea></label>
+      <div class="presets">
+        <span>Preset:</span>
+        <button type="button" data-preset="minimal">Minimal</button>
+        <button type="button" data-preset="thread">Thread</button>
+        <button type="button" data-preset="qa">Q&amp;A</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Preview (sample data)</h2>
+      <pre id="preview"></pre>
+    </section>
+
+    <section>
+      <h2>Optional LLM reformat (body only)</h2>
+      <label class="inline"
+        ><input type="checkbox" id="useLlmReformat" /> Send plain conversation to LLM and replace body
+        Markdown</label
+      >
+      <label>Base URL (OpenAI-compatible) <input type="text" id="llmBaseUrl" /></label>
+      <label>API key <input type="password" id="llmApiKey" autocomplete="off" /></label>
+      <label>Model <input type="text" id="llmModel" /></label>
+      <label>Reformat instructions (system) <textarea id="llmReformatPrompt" rows="4"></textarea></label>
+      <p class="hint warning">
+        When enabled, conversation text is sent to the URL you configure. Grant the host permission when
+        prompted.
+      </p>
+    </section>
+
+    <p><button type="button" id="save">Save</button> <span id="save-status"></span></p>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

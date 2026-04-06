@@ -1,0 +1,17 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 12px;
+  min-width: 220px;
+}
+#sync {
+  width: 100%;
+  padding: 8px;
+  cursor: pointer;
+}
+#status {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+a {
+  font-size: 13px;
+}

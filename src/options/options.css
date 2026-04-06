@@ -1,0 +1,60 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 52rem;
+  margin: 24px auto;
+  padding: 0 16px;
+  line-height: 1.45;
+}
+h1 {
+  font-size: 1.35rem;
+}
+h2 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+}
+section {
+  margin-bottom: 1rem;
+}
+label {
+  display: block;
+  margin: 0.6rem 0;
+}
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  font: inherit;
+}
+.presets {
+  margin-top: 8px;
+}
+.presets button {
+  margin-right: 6px;
+}
+.hint {
+  font-size: 13px;
+  color: #444;
+}
+.hint.warning {
+  color: #7a2e0e;
+}
+pre {
+  background: #f4f4f4;
+  padding: 12px;
+  overflow: auto;
+  font-size: 12px;
+}
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inline input {
+  width: auto;
+}
+#save {
+  padding: 8px 16px;
+}

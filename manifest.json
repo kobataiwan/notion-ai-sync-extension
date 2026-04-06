@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Notion AI Sync",
+  "version": "0.1.0",
+  "description": "Sync AI conversations to Notion with customizable title, description, and body templates.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://api.notion.com/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Sync this chat to Notion",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
+      ],
+      "js": ["src/content/content.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}
