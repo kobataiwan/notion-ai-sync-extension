@@ -2,6 +2,8 @@
 
 Sync AI chat pages (ChatGPT, Claude, Gemini) to Notion with **customizable title, description, and body templates**, optional **OpenAI-compatible LLM** to reformat the body, and a **live preview** on the options page.
 
+Product plan snapshot: [docs/PLAN.md](docs/PLAN.md).
+
 ## Manifest V3 (MV3) constraints
 
 This extension targets **Manifest V3** (`manifest_version: 3`). Treat these as hard rules:
